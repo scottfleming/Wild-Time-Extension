@@ -22,6 +22,8 @@ class HuffPostBase(Dataset):
         download_detection(args.data_dir, self.data_file)
         preprocess(args)
 
+        # import pdb
+        # pdb.set_trace()
         self.datasets = pickle.load(open(os.path.join(args.data_dir, self.data_file), 'rb'))
 
         self.args = args
@@ -125,6 +127,7 @@ class HuffPost(HuffPostBase):
         super().__init__(args=args)
 
     def __getitem__(self, index):
+        sel_time = None
         if self.args.difficulty and self.mode == 0:
             # Pick a time step from all previous timesteps
             idx = self.ENV.index(self.current_time)
@@ -138,11 +141,12 @@ class HuffPost(HuffPostBase):
 
         headline = self.datasets[self.current_time][self.mode]['headline'][index]
         category = self.datasets[self.current_time][self.mode]['category'][index]
-
+        
         x = self.transform(text=headline)
         y = torch.LongTensor([category])
-
-        return x, y
+        t = torch.Tensor([self.current_time if sel_time is None else sel_time])
+         
+        return x, y, t
 
     def __len__(self):
         return len(self.datasets[self.current_time][self.mode]['category'])
